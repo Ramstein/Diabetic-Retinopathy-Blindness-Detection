@@ -161,6 +161,8 @@ def main():
         set_manual_seed(args.seed)
         num_classes = len(class_names)
 
+
+        # made changes for device selection
         model = get_model(model_name, num_classes=num_classes, dropout=dropout)
         if torch.cuda.is_available():
             model = model.cuda()

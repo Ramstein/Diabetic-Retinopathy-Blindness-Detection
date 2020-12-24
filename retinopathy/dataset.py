@@ -234,7 +234,7 @@ def download_from_s3(s3_filename, local_path="test"):
 
 def get_aptos2019_train(data_dir):
     # downloading from s3
-    download_from_s3(s3_filename="aptos-2019/train.csv", local_path=os.path.join(data_dir, 'train.csv'))
+    # download_from_s3(s3_filename="aptos-2019/train.csv", local_path=os.path.join(data_dir, 'train.csv'))
 
     aptos2019_train = pd.read_csv(os.path.join(data_dir, 'train.csv'))
     # Remove duplicates and wrong annotations
@@ -250,7 +250,7 @@ def get_aptos2019_train(data_dir):
 
 
 def get_aptos2019_test(data_dir):
-    download_from_s3(s3_filename="aptos-2019/test.csv", local_path=os.path.join(data_dir, 'test.csv'))
+    # download_from_s3(s3_filename="aptos-2019/test.csv", local_path=os.path.join(data_dir, 'test.csv'))
     aptos2019_test = pd.read_csv(os.path.join(data_dir, 'test.csv'))
     x = np.array(aptos2019_test['id_code'].apply(lambda x: os.path.join(data_dir, 'test_images_768', f'{x}.png')))
     y = np.array([UNLABELED_CLASS] * len(x), dtype=int)

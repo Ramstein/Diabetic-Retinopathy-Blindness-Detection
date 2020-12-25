@@ -6,6 +6,8 @@ import json
 import multiprocessing
 import os
 from datetime import datetime
+from tqdm import tqdm
+
 
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
@@ -24,8 +26,67 @@ from retinopathy.factory import get_model, get_optimizer, \
 from retinopathy.scripts.clean_checkpoint import clean_checkpoint
 from retinopathy.train_utils import report_checkpoint, get_reg_callbacks, get_ord_callbacks, get_cls_callbacks
 
+import boto3
+import botocore
+from botocore.exceptions import ClientError
+
+bucket = "dataset-retinopathy"
+region_name="us-east-1"
+
+
+def download_dir(s3_folder, local_path, bucket=""):
+    """
+    params:
+    - s3_folder: pattern to match in s3
+    - local_path: local_path path to folder in which to place files
+    - bucket: s3 bucket with target contents
+    - client: initialized s3 client object
+    """
+    client = boto3.client('s3', region_name=region_name)
+    keys = []
+    dirs = []
+    next_token = ''
+    base_kwargs = {
+        'Bucket': bucket,
+        'Prefix': s3_folder,
+    }
+    while next_token is not None:
+        kwargs = base_kwargs.copy()
+        if next_token != '':
+            kwargs.update({'ContinuationToken': next_token})
+        results = client.list_objects_v2(**kwargs)
+        contents = results.get('Contents')
+        for i in contents:
+            k = i.get('Key')
+            if k[-1] != '/':
+                keys.append(k)
+            else:
+                dirs.append(k)
+        next_token = results.get('NextContinuationToken')
+    for d in dirs:
+        dest_pathname = os.path.join(local_path, d)
+        if not os.path.exists(os.path.dirname(dest_pathname)):
+            os.makedirs(os.path.dirname(dest_pathname))
+    print("Started downloading the s3://{}/{} to {}".format(bucket, s3_folder, local_path))
+
+    for k in tqdm(keys):
+        dest_pathname = os.path.join(local_path, k)
+        if not os.path.exists(os.path.dirname(dest_pathname)):
+            os.makedirs(os.path.dirname(dest_pathname))
+        try:
+            # print("Downloading {}".format(dest_pathname))
+            client.download_file(bucket, k, dest_pathname)
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == "404":
+                print("The object does not exist.")
+            else:
+                raise
+    print("Downloading completed the s3://{}/{} to {}".format(bucket, s3_folder, local_path))
+
 
 def main():
+    # downloading the files from s3 first
+    download_dir(s3_folder='aptos-2019', local_path='/home/ec2-user/SageMaker/data_full', bucket=bucket)
     parser = argparse.ArgumentParser()
     # parser.add_argument('--seed', type=int, default=42, help='Random seed')
     # parser.add_argument('--fast', action='store_true')

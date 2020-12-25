@@ -19,9 +19,6 @@ hyperparameters = {
     'epochs': 100,
     'early-stopping': 20,
     'fold': 0,  # not more than 4 fold
-    'fold': 1,
-    'fold': 2,
-    'fold': 3,
     # 'freeze-encoder': "",
     'learning-rate': 1e-4,
     # 'criterion-log': ['mse'],

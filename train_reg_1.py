@@ -152,7 +152,7 @@ def main():
     batch_size = 64
     num_epochs = 100
     early_stopping = 20
-    folds = [4]
+    folds = [0, 1, 2, 3]
     freeze_encoder = False
     learning_rate = 1e-4
     criterion_reg_name = ['mse']
@@ -167,7 +167,7 @@ def main():
     augmentations = 'medium'
 
     transfer = None
-    # fp16 = True
+    fp16 = args.fp16
     scheduler_name = 'multistep'
     image_size = (args.size, args.size)
     weight_decay = 0.0
@@ -340,10 +340,12 @@ def main():
             criterions.update(crits)
 
         if l1 > 0:
-            callbacks += [LPRegularizationCallback(start_wd=l1, end_wd=l1, schedule=None, loss_key='l1', p=1)]
+            # callbacks += [LPRegularizationCallback(start_wd=l1, end_wd=l1, schedule=None, loss_key='l1', p=1)]
+            callbacks += [LPRegularizationCallback(start_wd=l1, end_wd=l1, schedule=None, p=1)]
 
         if l2 > 0:
-            callbacks += [LPRegularizationCallback(start_wd=l2, end_wd=l2, schedule=None, loss_key='l2', p=2)]
+            # callbacks += [LPRegularizationCallback(start_wd=l2, end_wd=l2, schedule=None, loss_key='l2', p=2)]
+            callbacks += [LPRegularizationCallback(start_wd=l2, end_wd=l2, schedule=None, p=2)]
 
         callbacks += [
             CustomOptimizerCallback()

@@ -158,18 +158,18 @@ def main():
     criterion_reg_name = ['mse']
     criterion_ord_name = None
     criterion_cls_name = None
-    l1 = 0.0
+    l1 = 2e-4
     l2 = 0.0
     optimizer_name = 'Adam'
     preprocessing = None
     checkpoint_file = None
-    num_workers = 4
+    num_workers = args.workers
     augmentations = 'medium'
 
     transfer = None
     fp16 = True
     scheduler_name = 'multistep'
-    image_size = (512, 512)
+    image_size = (args.size, args.size)
     weight_decay = 0.0
     weight_decay_step = None
     dropout = 0.4

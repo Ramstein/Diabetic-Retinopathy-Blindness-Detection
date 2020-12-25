@@ -43,16 +43,16 @@ class RetinopathyDataset(Dataset):
                  target_as_array=False,
                  dtype=int,
                  meta_features=False):
-        if targets is not None:
+        if targets:  # False
             targets = np.array(targets)
             unique_targets = set(targets)
             if len(unique_targets.difference({0, 1, 2, 3, 4, UNLABELED_CLASS})):
                 raise ValueError('Unexpected targets in Y ' + str(unique_targets))
 
-        self.meta_features = meta_features
+        self.meta_features = meta_features  # False
         self.images = np.array(images)
         self.targets = targets
-        self.transform = transform
+        self.transform = transform  # image preprocessing transform like cropping the black region
         self.target_as_array = target_as_array
         self.dtype = dtype
 
@@ -67,7 +67,7 @@ class RetinopathyDataset(Dataset):
 
         height, width = image.shape[:2]
         diagnosis = UNLABELED_CLASS
-        if self.targets is not None:
+        if self.targets:   # False
             diagnosis = self.targets[item]
 
         data = self.transform(image=image, diagnosis=diagnosis)
@@ -75,7 +75,7 @@ class RetinopathyDataset(Dataset):
         data = {'image': tensor_from_rgb_image(data['image']),
                 'image_id': id_from_fname(self.images[item])}
 
-        if self.meta_features:
+        if self.meta_features:   # False
             log_height = math.log(height)
             log_width = math.log(width)
             aspect_ratio = log_height / log_width

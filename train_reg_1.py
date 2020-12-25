@@ -27,93 +27,96 @@ from retinopathy.train_utils import report_checkpoint, get_reg_callbacks, get_or
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--seed', type=int, default=42, help='Random seed')
-    parser.add_argument('--fast', action='store_true')
-    parser.add_argument('--mixup', action='store_true')
-    parser.add_argument('--balance', action='store_true')
-    parser.add_argument('--balance-datasets', action='store_true')
-    parser.add_argument('--swa', action='store_true')
-    parser.add_argument('--show', action='store_true')
-    parser.add_argument('--use-idrid', action='store_true')
-    parser.add_argument('--use-messidor', action='store_true')
-    parser.add_argument('--use-aptos2015', action='store_true')
-    parser.add_argument('--use-aptos2019', action='store_true')
-    parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument('--coarse', action='store_true')
-    parser.add_argument('-acc', '--accumulation-steps', type=int, default=1, help='Number of batches to process')
-    parser.add_argument('-dd', '--data-dir', type=str, default='data', help='Data directory')
-    parser.add_argument('-m', '--model', type=str, default='resnet18_gap', help='')
-    parser.add_argument('-b', '--batch-size', type=int, default=8, help='Batch Size during training, e.g. -b 64')
-    parser.add_argument('-e', '--epochs', type=int, default=100, help='Epoch to run')
-    parser.add_argument('-es', '--early-stopping', type=int, default=None,
-                        help='Maximum number of epochs without improvement')
-    parser.add_argument('-f', '--fold', action='append', type=int, default=None)
-    parser.add_argument('-fe', '--freeze-encoder', action='store_true')
-    parser.add_argument('-lr', '--learning-rate', type=float, default=1e-4, help='Initial learning rate')
-    parser.add_argument('--criterion-reg', type=str, default=['mse'], nargs='+', help='Criterion')
-    parser.add_argument('--criterion-ord', type=str, default=None, nargs='+', help='Criterion')
-    parser.add_argument('--criterion-cls', type=str, default=None, nargs='+', help='Criterion')
-    parser.add_argument('-l1', type=float, default=0.0, help='L1 regularization loss')
-    parser.add_argument('-l2', type=float, default=0.0, help='L2 regularization loss')
-    parser.add_argument('-o', '--optimizer', default='Adam', help='Name of the optimizer')
-    parser.add_argument('-p', '--preprocessing', default=None, help='Preprocessing method')
-    parser.add_argument('-c', '--checkpoint', type=str, default=None,
-                        help='Checkpoint filename to use as initial model weights')
-    parser.add_argument('-w', '--workers', default=multiprocessing.cpu_count(), type=int, help='Num workers')
-    parser.add_argument('-a', '--augmentations', default='medium', type=str, help='')
-    parser.add_argument('-tta', '--tta', default=None, type=str, help='Type of TTA to use [fliplr, d4]')
-    parser.add_argument('-t', '--transfer', default=None, type=str, help='')
-    parser.add_argument('--fp16', action='store_true')
-    parser.add_argument('-s', '--scheduler', default='multistep', type=str, help='')
-    parser.add_argument('--size', default=512, type=int, help='Image size for training & inference')
-    parser.add_argument('-wd', '--weight-decay', default=0.0, type=float, help='L2 weight decay')
-    parser.add_argument('-wds', '--weight-decay-step', default=None, type=float,
-                        help='L2 weight decay step to add after each epoch')
-    parser.add_argument('-d', '--dropout', default=0.0, type=float, help='Dropout before head layer')
-    parser.add_argument('--warmup', default=0, type=int,
-                        help='Number of warmup epochs with 0.1 of the initial LR and frozed encoder')
-    parser.add_argument('-x', '--experiment', default=None, type=str, help='Dropout before head layer')
+    # parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    # parser.add_argument('--fast', action='store_true')
+    # parser.add_argument('--mixup', action='store_true')
+    # parser.add_argument('--balance', action='store_true')
+    # parser.add_argument('--balance-datasets', action='store_true')
+    # parser.add_argument('--swa', action='store_true')
+    # parser.add_argument('--show', action='store_true')
+    # parser.add_argument('--use-idrid', action='store_true')
+    # parser.add_argument('--use-messidor', action='store_true')
+    # parser.add_argument('--use-aptos2015', action='store_true')
+    # parser.add_argument('--use-aptos2019', action='store_true')
+    # parser.add_argument('-v', '--verbose', action='store_true')
+    # parser.add_argument('--coarse', action='store_true')
+    # parser.add_argument('-acc', '--accumulation-steps', type=int, default=1, help='Number of batches to process')
+    # parser.add_argument('-dd', '--data-dir', type=str, default='data', help='Data directory')
+    # parser.add_argument('-m', '--model', type=str, default='resnet18_gap', help='')
+    # parser.add_argument('-b', '--batch-size', type=int, default=8, help='Batch Size during training, e.g. -b 64')
+    # parser.add_argument('-e', '--epochs', type=int, default=100, help='Epoch to run')
+    # parser.add_argument('-es', '--early-stopping', type=int, default=None,
+    #                     help='Maximum number of epochs without improvement')
+    # parser.add_argument('-f', '--fold', action='append', type=int, default=None)
+    # parser.add_argument('-fe', '--freeze-encoder', action='store_true')
+    # parser.add_argument('-lr', '--learning-rate', type=float, default=1e-4, help='Initial learning rate')
+    # parser.add_argument('--criterion-reg', type=str, default=['mse'], nargs='+', help='Criterion')
+    # parser.add_argument('--criterion-ord', type=str, default=None, nargs='+', help='Criterion')
+    # parser.add_argument('--criterion-cls', type=str, default=None, nargs='+', help='Criterion')
+    # parser.add_argument('-l1', type=float, default=0, help='L1 regularization loss')
+    # parser.add_argument('-l2', type=float, default=0, help='L2 regularization loss')
+    # parser.add_argument('-o', '--optimizer', default='Adam', help='Name of the optimizer')
+    # parser.add_argument('-p', '--preprocessing', default=None, help='Preprocessing method')
+    # parser.add_argument('-c', '--checkpoint', type=str, default=None,
+    #                     help='Checkpoint filename to use as initial model weights')
+    # parser.add_argument('-w', '--workers', default=multiprocessing.cpu_count(), type=int, help='Num workers')
+    # parser.add_argument('-a', '--augmentations', default='medium', type=str, help='')
+    # parser.add_argument('-tta', '--tta', default=None, type=str, help='Type of TTA to use [fliplr, d4]')
+    # parser.add_argument('-t', '--transfer', default=None, type=str, help='')
+    # parser.add_argument('--fp16', action='store_true')
+    # parser.add_argument('-s', '--scheduler', default='multistep', type=str, help='')
+    # parser.add_argument('--size', default=512, type=int, help='Image size for training & inference')
+    # parser.add_argument('-wd', '--weight-decay', default=0.0, type=float, help='L2 weight decay')
+    # parser.add_argument('-wds', '--weight-decay-step', default=None, type=float,
+    #                     help='L2 weight decay step to add after each epoch')
+    # parser.add_argument('-d', '--dropout', default=0.0, type=float, help='Dropout before head layer')
+    # parser.add_argument('--warmup', default=0, type=int,
+    #                     help='Number of warmup epochs with 0.1 of the initial LR and frozed encoder')
+    # parser.add_argument('-x', '--experiment', default=None, type=str, help='Dropout before head layer')
 
     args = parser.parse_args()
 
-    data_dir = args.data_dir
-    num_workers = args.workers
-    num_epochs = args.epochs
-    batch_size = args.batch_size
-    learning_rate = args.learning_rate
-    l1 = args.l1
-    l2 = args.l2
-    early_stopping = args.early_stopping
-    model_name = args.model
-    optimizer_name = args.optimizer
-    image_size = (args.size, args.size)
-    fast = args.fast
-    augmentations = args.augmentations
-    fp16 = args.fp16
-    freeze_encoder = args.freeze_encoder
-    criterion_reg_name = args.criterion_reg
-    criterion_cls_name = args.criterion_cls
-    criterion_ord_name = args.criterion_ord
-    folds = args.fold
-    mixup = args.mixup
-    balance = args.balance
-    balance_datasets = args.balance_datasets
-    use_swa = args.swa
-    show_batches = args.show
-    scheduler_name = args.scheduler
-    verbose = args.verbose
-    weight_decay = args.weight_decay
-    use_idrid = args.use_idrid
-    use_messidor = args.use_messidor
-    use_aptos2015 = args.use_aptos2015
-    use_aptos2019 = args.use_aptos2019
-    warmup = args.warmup
-    dropout = args.dropout
+    seed = 42
+    data_dir = '/home/ec2-user/SageMaker/data'
+    num_workers = 4
+    num_epochs = 100
+    batch_size = 64
+    learning_rate = 1e-4
+    l1 = 0.0
+    l2 = 0.0
+    early_stopping = 20
+    model_name = 'efficientb6_max'
+    checkpoint_file = None
+    optimizer_name = 'Adam'
+    image_size = (512, 512)
+    fast = False
+    augmentations = 'medium'
+    transfer=None
+    fp16 = True
+    freeze_encoder = False
+    criterion_reg_name = ['mse']
+    criterion_ord_name = None
+    criterion_cls_name = None
+    folds = [0, 1, 2, 3]
+    mixup = False
+    balance = False
+    balance_datasets = False
+    use_swa = False
+    show_batches = False
+    scheduler_name = 'multistep'
+    verbose = True
+    weight_decay = 0.0
+    use_idrid = False
+    use_messidor = False
+    use_aptos2015 = False
+    use_aptos2019 = True
+    warmup = 0
+    dropout = 0.4
     use_unsupervised = False
-    experiment = args.experiment
-    preprocessing = args.preprocessing
-    weight_decay_step = args.weight_decay_step
-    coarse_grading = args.coarse
+    experiment = None
+    preprocessing = None
+    weight_decay_step = None
+    coarse_grading = False
     class_names = get_class_names(coarse_grading)
 
     assert use_aptos2015 or use_aptos2019 or use_idrid or use_messidor
@@ -126,7 +129,7 @@ def main():
 
     for fold in folds:
         torch.cuda.empty_cache()
-        checkpoint_prefix = f'{model_name}_{args.size}_{augmentations}'
+        checkpoint_prefix = f'{model_name}_{512}_{augmentations}'
 
         if preprocessing is not None:
             checkpoint_prefix += f'_{preprocessing}'
@@ -158,7 +161,7 @@ def main():
             train_session_args = vars(args)
             f.write(json.dumps(train_session_args, indent=2))
 
-        set_manual_seed(args.seed)
+        set_manual_seed(seed)
         num_classes = len(class_names)
 
 
@@ -167,8 +170,8 @@ def main():
         if torch.cuda.is_available():
             model = model.cuda()
 
-        if args.transfer:
-            transfer_checkpoint = fs.auto_file(args.transfer)
+        if transfer:
+            transfer_checkpoint = fs.auto_file(transfer)
             print("Transfering weights from model checkpoint",
                   transfer_checkpoint)
             checkpoint = load_checkpoint(transfer_checkpoint)
@@ -183,8 +186,8 @@ def main():
 
             report_checkpoint(checkpoint)
 
-        if args.checkpoint:
-            checkpoint = load_checkpoint(fs.auto_file(args.checkpoint))
+        if checkpoint_file:
+            checkpoint = load_checkpoint(fs.auto_file(checkpoint_file))
             unpack_checkpoint(checkpoint, model=model)
             report_checkpoint(checkpoint)
 

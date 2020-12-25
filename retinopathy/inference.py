@@ -308,7 +308,7 @@ def run_model_inference(model_checkpoint: str,
     else:
         targets = None
 
-    test_ds = RetinopathyDataset(image_fnames, targets, get_test_transform(image_size,
+    test_ds = RetinopathyDataset(image_fnames, targets, transform=get_test_transform(image_size,
                                                                            preprocessing=preprocessing,
                                                                            crop_black=crop_black))
     return run_model_inference_via_dataset(model_checkpoint, test_ds, **kwargs)

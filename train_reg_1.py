@@ -6,16 +6,18 @@ import json
 import multiprocessing
 import os
 from datetime import datetime
-from tqdm import tqdm
 
-
+import boto3
+import botocore
 import torch
+from botocore.exceptions import ClientError
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
 from catalyst.utils import load_checkpoint, unpack_checkpoint
 from pytorch_toolbelt.utils import fs
 from pytorch_toolbelt.utils.random import set_manual_seed, get_random_name
 from pytorch_toolbelt.utils.torch_utils import count_parameters, \
     set_trainable
+from tqdm import tqdm
 
 from retinopathy.callbacks import LPRegularizationCallback, \
     CustomOptimizerCallback
@@ -26,12 +28,8 @@ from retinopathy.factory import get_model, get_optimizer, \
 from retinopathy.scripts.clean_checkpoint import clean_checkpoint
 from retinopathy.train_utils import report_checkpoint, get_reg_callbacks, get_ord_callbacks, get_cls_callbacks
 
-import boto3
-import botocore
-from botocore.exceptions import ClientError
-
 bucket = "dataset-retinopathy"
-region_name="us-east-1"
+region_name = "us-east-1"
 
 
 def download_dir(s3_folder, local_path, bucket=""):
@@ -85,106 +83,107 @@ def download_dir(s3_folder, local_path, bucket=""):
 
 
 def main():
-
     parser = argparse.ArgumentParser()
-    # parser.add_argument('--seed', type=int, default=42, help='Random seed')
-    # parser.add_argument('--fast', action='store_true')
-    # parser.add_argument('--mixup', action='store_true')
-    # parser.add_argument('--balance', action='store_true')
-    # parser.add_argument('--balance-datasets', action='store_true')
-    # parser.add_argument('--swa', action='store_true')
-    # parser.add_argument('--show', action='store_true')
-    # parser.add_argument('--use-idrid', action='store_true')
-    # parser.add_argument('--use-messidor', action='store_true')
-    # parser.add_argument('--use-aptos2015', action='store_true')
-    # parser.add_argument('--use-aptos2019', action='store_true')
-    # parser.add_argument('-v', '--verbose', action='store_true')
-    # parser.add_argument('--coarse', action='store_true')
-    # parser.add_argument('-acc', '--accumulation-steps', type=int, default=1, help='Number of batches to process')
-    # parser.add_argument('-dd', '--data-dir', type=str, default='data', help='Data directory')
-    # parser.add_argument('-m', '--model', type=str, default='resnet18_gap', help='')
-    # parser.add_argument('-b', '--batch-size', type=int, default=8, help='Batch Size during training, e.g. -b 64')
-    # parser.add_argument('-e', '--epochs', type=int, default=100, help='Epoch to run')
-    # parser.add_argument('-es', '--early-stopping', type=int, default=None,
-    #                     help='Maximum number of epochs without improvement')
-    # parser.add_argument('-f', '--fold', action='append', type=int, default=None)
-    # parser.add_argument('-fe', '--freeze-encoder', action='store_true')
-    # parser.add_argument('-lr', '--learning-rate', type=float, default=1e-4, help='Initial learning rate')
-    # parser.add_argument('--criterion-reg', type=str, default=['mse'], nargs='+', help='Criterion')
-    # parser.add_argument('--criterion-ord', type=str, default=None, nargs='+', help='Criterion')
-    # parser.add_argument('--criterion-cls', type=str, default=None, nargs='+', help='Criterion')
-    # parser.add_argument('-l1', type=float, default=0, help='L1 regularization loss')
-    # parser.add_argument('-l2', type=float, default=0, help='L2 regularization loss')
-    # parser.add_argument('-o', '--optimizer', default='Adam', help='Name of the optimizer')
-    # parser.add_argument('-p', '--preprocessing', default=None, help='Preprocessing method')
-    # parser.add_argument('-c', '--checkpoint', type=str, default=None,
-    #                     help='Checkpoint filename to use as initial model weights')
-    # parser.add_argument('-w', '--workers', default=multiprocessing.cpu_count(), type=int, help='Num workers')
-    # parser.add_argument('-a', '--augmentations', default='medium', type=str, help='')
-    # parser.add_argument('-tta', '--tta', default=None, type=str, help='Type of TTA to use [fliplr, d4]')
-    # parser.add_argument('-t', '--transfer', default=None, type=str, help='')
-    # parser.add_argument('--fp16', action='store_true')
-    # parser.add_argument('-s', '--scheduler', default='multistep', type=str, help='')
-    # parser.add_argument('--size', default=512, type=int, help='Image size for training & inference')
-    # parser.add_argument('-wd', '--weight-decay', default=0.0, type=float, help='L2 weight decay')
-    # parser.add_argument('-wds', '--weight-decay-step', default=None, type=float,
-    #                     help='L2 weight decay step to add after each epoch')
-    # parser.add_argument('-d', '--dropout', default=0.0, type=float, help='Dropout before head layer')
-    # parser.add_argument('--warmup', default=0, type=int,
-    #                     help='Number of warmup epochs with 0.1 of the initial LR and frozed encoder')
-    # parser.add_argument('-x', '--experiment', default=None, type=str, help='Dropout before head layer')
+    parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    parser.add_argument('--fast', action='store_true')
+    parser.add_argument('--mixup', action='store_true')
+    parser.add_argument('--balance', action='store_true')
+    parser.add_argument('--balance-datasets', action='store_true')
+    parser.add_argument('--swa', action='store_true')
+    parser.add_argument('--show', action='store_true')
+    parser.add_argument('--use-idrid', action='store_true')
+    parser.add_argument('--use-messidor', action='store_true')
+    parser.add_argument('--use-aptos2015', action='store_true')
+    parser.add_argument('--use-aptos2019', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('--coarse', action='store_true')
+    parser.add_argument('-acc', '--accumulation-steps', type=int, default=1, help='Number of batches to process')
+    parser.add_argument('-dd', '--data-dir', type=str, default='data', help='Data directory')
+    parser.add_argument('-m', '--model', type=str, default='resnet18_gap', help='')
+    parser.add_argument('-b', '--batch-size', type=int, default=8, help='Batch Size during training, e.g. -b 64')
+    parser.add_argument('-e', '--epochs', type=int, default=100, help='Epoch to run')
+    parser.add_argument('-es', '--early-stopping', type=int, default=None,
+                        help='Maximum number of epochs without improvement')
+    parser.add_argument('-f', '--fold', action='append', type=int, default=None)
+    parser.add_argument('-fe', '--freeze-encoder', action='store_true')
+    parser.add_argument('-lr', '--learning-rate', type=float, default=1e-4, help='Initial learning rate')
+    parser.add_argument('--criterion-reg', type=str, default=['mse'], nargs='+', help='Criterion')
+    parser.add_argument('--criterion-ord', type=str, default=None, nargs='+', help='Criterion')
+    parser.add_argument('--criterion-cls', type=str, default=None, nargs='+', help='Criterion')
+    parser.add_argument('-l1', type=float, default=0, help='L1 regularization loss')
+    parser.add_argument('-l2', type=float, default=0, help='L2 regularization loss')
+    parser.add_argument('-o', '--optimizer', default='Adam', help='Name of the optimizer')
+    parser.add_argument('-p', '--preprocessing', default=None, help='Preprocessing method')
+    parser.add_argument('-c', '--checkpoint', type=str, default=None,
+                        help='Checkpoint filename to use as initial model weights')
+    parser.add_argument('-w', '--workers', default=multiprocessing.cpu_count(), type=int, help='Num workers')
+    parser.add_argument('-a', '--augmentations', default='medium', type=str, help='')
+    parser.add_argument('-tta', '--tta', default=None, type=str, help='Type of TTA to use [fliplr, d4]')
+    parser.add_argument('-t', '--transfer', default=None, type=str, help='')
+    parser.add_argument('--fp16', action='store_true')
+    parser.add_argument('-s', '--scheduler', default='multistep', type=str, help='')
+    parser.add_argument('--size', default=512, type=int, help='Image size for training & inference')
+    parser.add_argument('-wd', '--weight-decay', default=0.0, type=float, help='L2 weight decay')
+    parser.add_argument('-wds', '--weight-decay-step', default=None, type=float,
+                        help='L2 weight decay step to add after each epoch')
+    parser.add_argument('-d', '--dropout', default=0.0, type=float, help='Dropout before head layer')
+    parser.add_argument('--warmup', default=0, type=int,
+                        help='Number of warmup epochs with 0.1 of the initial LR and frozed encoder')
+    parser.add_argument('-x', '--experiment', default=None, type=str, help='Dropout before head layer')
 
     args = parser.parse_args()
 
     seed = 42
-    data_dir = '/opt/ml/input/data'
-    num_workers = 4
-    num_epochs = 100
-    batch_size = 64
-    learning_rate = 1e-4
-    l1 = 0.0
-    l2 = 0.0
-    early_stopping = 20
-    model_name = 'efficientb6_max'
-    checkpoint_file = None
-    optimizer_name = 'Adam'
-    image_size = (512, 512)
     fast = False
-    augmentations = 'medium'
-    transfer=None
-    fp16 = True
-    freeze_encoder = False
-    criterion_reg_name = ['mse']
-    criterion_ord_name = None
-    criterion_cls_name = None
-    folds = [0, 1, 2, 3]
     mixup = False
     balance = False
     balance_datasets = False
     use_swa = False
     show_batches = False
-    scheduler_name = 'multistep'
-    verbose = True
-    weight_decay = 0.0
     use_idrid = False
     use_messidor = False
     use_aptos2015 = False
     use_aptos2019 = True
-    warmup = 0
-    dropout = 0.4
-    use_unsupervised = False
-    experiment = None
-    preprocessing = None
-    weight_decay_step = None
+    verbose = True
     coarse_grading = False
-    class_names = get_class_names(coarse_grading)
 
+    data_dir = '/opt/ml/input/data'
+    model_name = 'efficientb6_max'
+    batch_size = 64
+    num_epochs = 100
+    early_stopping = 20
+    folds = [0, 1, 2, 3]
+    freeze_encoder = False
+    learning_rate = 1e-4
+    criterion_reg_name = ['mse']
+    criterion_ord_name = None
+    criterion_cls_name = None
+    l1 = 0.0
+    l2 = 0.0
+    optimizer_name = 'Adam'
+    preprocessing = None
+    checkpoint_file = None
+    num_workers = 4
+    augmentations = 'medium'
+
+    transfer = None
+    fp16 = True
+    scheduler_name = 'multistep'
+    image_size = (512, 512)
+    weight_decay = 0.0
+    weight_decay_step = None
+    dropout = 0.4
+    warmup = 0
+    experiment = None
+
+    use_unsupervised = False
+
+    class_names = get_class_names(coarse_grading)
     assert use_aptos2015 or use_aptos2019 or use_idrid or use_messidor
 
-
-    if use_aptos2019:
-        # downloading the files from s3 first
-        download_dir(s3_folder='aptos-2019', local_path=data_dir, bucket=bucket)
+    # if use_aptos2019:
+    #     # downloading the files from s3 first
+    #     download_dir(s3_folder='aptos-2019', local_path=data_dir, bucket=bucket)
 
     current_time = datetime.now().strftime('%b%d_%H_%M')
     random_name = get_random_name()
@@ -228,7 +227,6 @@ def main():
 
         set_manual_seed(seed)
         num_classes = len(class_names)
-
 
         # made changes for device selection
         model = get_model(model_name, num_classes=num_classes, dropout=dropout)

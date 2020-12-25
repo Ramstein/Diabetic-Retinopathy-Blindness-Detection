@@ -85,8 +85,7 @@ def download_dir(s3_folder, local_path, bucket=""):
 
 
 def main():
-    # downloading the files from s3 first
-    download_dir(s3_folder='aptos-2019', local_path='/home/ec2-user/SageMaker/data_full', bucket=bucket)
+
     parser = argparse.ArgumentParser()
     # parser.add_argument('--seed', type=int, default=42, help='Random seed')
     # parser.add_argument('--fast', action='store_true')
@@ -138,7 +137,7 @@ def main():
     args = parser.parse_args()
 
     seed = 42
-    data_dir = '/home/ec2-user/SageMaker/data'
+    data_dir = '/opt/ml/input/data'
     num_workers = 4
     num_epochs = 100
     batch_size = 64
@@ -181,6 +180,11 @@ def main():
     class_names = get_class_names(coarse_grading)
 
     assert use_aptos2015 or use_aptos2019 or use_idrid or use_messidor
+
+
+    if use_aptos2019:
+        # downloading the files from s3 first
+        download_dir(s3_folder='aptos-2019', local_path=data_dir, bucket=bucket)
 
     current_time = datetime.now().strftime('%b%d_%H_%M')
     random_name = get_random_name()

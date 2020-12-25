@@ -1058,10 +1058,11 @@ def get_datasets(
 
     train_x, train_y, valid_x, valid_y = data_split
 
-    # Regardless of used datasets let's use some data from validation (holdout)
-    data_idrid_test = get_idrid_test(os.path.join(data_dir, 'idrid'))
-    valid_x.extend(data_idrid_test[0])
-    valid_y.extend(data_idrid_test[1])
+    if use_idrid:
+        # Regardless of used datasets let's use some data from validation (holdout)
+        data_idrid_test = get_idrid_test(os.path.join(data_dir, 'idrid'))
+        valid_x.extend(data_idrid_test[0])
+        valid_y.extend(data_idrid_test[1])
 
     if use_aptos2015:
         data_aptos15_public = get_aptos2015_test_public(aptos2015_dir, healthy_eye_fraction=0.1)

@@ -340,12 +340,10 @@ def main():
             criterions.update(crits)
 
         if l1 > 0:
-            # callbacks += [LPRegularizationCallback(start_wd=l1, end_wd=l1, schedule=None, loss_key='l1', p=1)]
-            callbacks += [LPRegularizationCallback(start_wd=l1, end_wd=l1, schedule=None, p=1)]
+            callbacks += [LPRegularizationCallback(start_wd=l1, end_wd=l1, schedule=None, loss_key='l1', p=1)]
 
         if l2 > 0:
-            # callbacks += [LPRegularizationCallback(start_wd=l2, end_wd=l2, schedule=None, loss_key='l2', p=2)]
-            callbacks += [LPRegularizationCallback(start_wd=l2, end_wd=l2, schedule=None, p=2)]
+            callbacks += [LPRegularizationCallback(start_wd=l2, end_wd=l2, schedule=None, loss_key='l2', p=2)]
 
         callbacks += [
             CustomOptimizerCallback()

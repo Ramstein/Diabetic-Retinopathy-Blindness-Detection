@@ -94,12 +94,12 @@ def main():
     parser.add_argument('--use-idrid', action='store_true')
     parser.add_argument('--use-messidor', action='store_true')
     parser.add_argument('--use-aptos2015', action='store_true')
-    parser.add_argument('--use-aptos2019', action='store_true')
-    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('--use-aptos2019', action='store_false')  # action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_false')  # action='store_true'
     parser.add_argument('--coarse', action='store_true')
     parser.add_argument('-acc', '--accumulation-steps', type=int, default=1, help='Number of batches to process')
     parser.add_argument('-dd', '--data-dir', type=str, default='data', help='Data directory')
-    parser.add_argument('-m', '--model', type=str, default='resnet18_gap', help='')
+    parser.add_argument('-m', '--model', type=str, default='efficientb6_max', help='')
     parser.add_argument('-b', '--batch-size', type=int, default=8, help='Batch Size during training, e.g. -b 64')
     parser.add_argument('-e', '--epochs', type=int, default=100, help='Epoch to run')
     parser.add_argument('-es', '--early-stopping', type=int, default=None,
@@ -143,8 +143,8 @@ def main():
     use_idrid = False
     use_messidor = False
     use_aptos2015 = False
-    use_aptos2019 = True
-    verbose = True
+    use_aptos2019 = args.use_aptos2019
+    verbose = args.verbose
     coarse_grading = False
 
     data_dir = '/opt/ml/input/data'
@@ -152,7 +152,7 @@ def main():
     batch_size = 64
     num_epochs = 100
     early_stopping = 20
-    folds = [0, 1, 2, 3]
+    folds = [4]
     freeze_encoder = False
     learning_rate = 1e-4
     criterion_reg_name = ['mse']
@@ -167,7 +167,7 @@ def main():
     augmentations = 'medium'
 
     transfer = None
-    fp16 = True
+    # fp16 = True
     scheduler_name = 'multistep'
     image_size = (args.size, args.size)
     weight_decay = 0.0
